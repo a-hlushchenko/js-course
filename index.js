@@ -134,7 +134,6 @@ channel.unsubscribe(user1);
 console.log('==============');
 
 channel.createVideo('vidddeooo');
-*/
 
 class Coffee {
   name = 'coffee';
@@ -174,3 +173,122 @@ let latteCoffee = new MilkDecorator(coffee, 10);
 console.log(latteCoffee.name);
 console.log(latteCoffee.cost);
 latteCoffee.cook();
+
+class TextEditor {
+  #text = "";
+
+  set text(text) {
+    this.#text = text;
+    this.#save();
+  }
+
+  get text() {
+    return this.#text;
+  }
+
+  #save() {
+    Snapshot.create(this.text);
+  }
+
+  restore() {
+    this.#text = Snapshot.restore().text;
+  }
+}
+
+class Snapshot {
+  constructor(text) {
+    this.text = text;
+  }
+
+  static #snapshots = [];
+
+  static create(text) {
+    this.#snapshots.push(new Snapshot(text));
+  }
+
+  static restore() {
+    this.#snapshots.pop();
+    return this.#snapshots[this.#snapshots.length - 1];
+  }
+}
+
+const editor = new TextEditor();
+
+editor.text = "Hello!";
+editor.text = "Hello world";
+editor.text = "Hello worlds!!!";
+
+console.log(editor.text);
+
+editor.restore();
+
+console.log(editor.text);
+
+editor.restore();
+
+console.log(editor.text);
+*/
+
+class AuthHandler {
+  setNextHandler(handler) {
+    this.nextHandler = handler;
+    return handler;
+  }
+
+  login(user, password) {
+    if (this.nextHandler) {
+      return this.nextHandler.login(user, password);
+    } else {
+      return false;
+    }
+  }
+}
+
+class TwoFactorAuthHandler extends AuthHandler {
+  login(user, password) {
+    if (
+      user === "john" &&
+      password === "password" &&
+      this.isValidTwoFactorCode()
+    ) {
+      console.log("вхід за допомогою двохфакторної аутентифікації дозволено");
+      return true;
+    } else {
+      return super.login(user, password);
+    }
+  }
+
+  isValidTwoFactorCode() {
+    return true;
+  }
+}
+
+class RoleHandler extends AuthHandler {
+  login(user, password) {
+    if (user === "guest") {
+      console.log("вхід дозволено з роллю гостя");
+      return true;
+    } else {
+      return super.login(user, password);
+    }
+  }
+}
+
+class CredentialHandler extends AuthHandler {
+  login(user, password) {
+    if (user === "admin" && password === "admin123") {
+      console.log("вхід дозволено за логіном та паролем");
+      return true;
+    } else {
+      return super.login(user, password);
+    }
+  }
+}
+
+const handler = new TwoFactorAuthHandler();
+const handler2 = new CredentialHandler();
+
+handler.setNextHandler(handler2);
+handler2.setNextHandler(new RoleHandler());
+
+handler.login("john", "password");
